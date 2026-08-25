@@ -3,6 +3,8 @@
  * GET: Retrieve audit logs (with authorization check)
  */
 
+'use server';
+
 import { NextRequest, NextResponse } from 'next/server';
 import { getUserProfile, adminDb } from '@/lib/firebase-admin';
 import { hasPermission } from '@/lib/authorization';

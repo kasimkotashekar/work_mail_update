@@ -7,6 +7,8 @@
  * After first Super Admin is created, this endpoint is disabled
  */
 
+'use server';
+
 import { NextRequest, NextResponse } from 'next/server';
 import {
   getUserProfile,

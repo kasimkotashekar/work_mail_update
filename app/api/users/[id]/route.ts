@@ -5,6 +5,8 @@
  * DELETE: Disable/delete user
  */
 
+'use server';
+
 import { NextRequest, NextResponse } from 'next/server';
 import {
   getUserProfile,

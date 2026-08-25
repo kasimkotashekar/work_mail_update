@@ -4,6 +4,8 @@
  * POST: Grant permission to user (with authorization checks)
  */
 
+'use server';
+
 import { NextRequest, NextResponse } from 'next/server';
 import {
   getUserProfile,

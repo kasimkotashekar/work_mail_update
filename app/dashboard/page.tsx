@@ -4,21 +4,27 @@ import { useEffect, useState } from 'react';
 import { auth } from '@/lib/firebase';
 import { useRouter } from 'next/navigation';
 import { signOut } from 'firebase/auth';
+import { ROLES, ROLE_DISPLAY_NAMES, ROLE_COLORS, hasPermission, PERMISSIONS } from '@/lib/roles';
 
 interface NavItem {
   icon: string;
   label: string;
   id: string;
+  permission?: string;
 }
 
-const navItems: NavItem[] = [
-  { icon: '📧', label: 'Inbox', id: 'inbox' },
-  { icon: '✍️', label: 'Compose', id: 'compose' },
-  { icon: '⭐', label: 'Starred', id: 'starred' },
-  { icon: '📤', label: 'Sent', id: 'sent' },
-  { icon: '📋', label: 'Drafts', id: 'drafts' },
-  { icon: '🗑️', label: 'Trash', id: 'trash' },
-  { icon: '⚙️', label: 'Settings', id: 'settings' },
+const getNavItems = (role: string): NavItem[] => [
+  { icon: '📧', label: 'Inbox', id: 'inbox', permission: PERMISSIONS.VIEW_DASHBOARD },
+  { icon: '✍️', label: 'Compose', id: 'compose', permission: PERMISSIONS.VIEW_DASHBOARD },
+  { icon: '⭐', label: 'Starred', id: 'starred', permission: PERMISSIONS.VIEW_DASHBOARD },
+  { icon: '📤', label: 'Sent', id: 'sent', permission: PERMISSIONS.VIEW_DASHBOARD },
+  { icon: '📋', label: 'Drafts', id: 'drafts', permission: PERMISSIONS.VIEW_DASHBOARD },
+  { icon: '🗑️', label: 'Trash', id: 'trash', permission: PERMISSIONS.VIEW_DASHBOARD },
+  ...(hasPermission(role, PERMISSIONS.MANAGE_TEAM) ? [{ icon: '👥', label: 'Team', id: 'team', permission: PERMISSIONS.MANAGE_TEAM }] : []),
+  ...(hasPermission(role, PERMISSIONS.VIEW_REPORTS) ? [{ icon: '📊', label: 'Reports', id: 'reports', permission: PERMISSIONS.VIEW_REPORTS }] : []),
+  ...(hasPermission(role, PERMISSIONS.MANAGE_USERS) ? [{ icon: '👤', label: 'Users', id: 'users', permission: PERMISSIONS.MANAGE_USERS }] : []),
+  ...(hasPermission(role, PERMISSIONS.SYSTEM_SETTINGS) ? [{ icon: '⚙️', label: 'System', id: 'system', permission: PERMISSIONS.SYSTEM_SETTINGS }] : []),
+  { icon: '⚙️', label: 'Settings', id: 'settings', permission: PERMISSIONS.VIEW_DASHBOARD },
 ];
 
 export default function DashboardPage() {
@@ -26,12 +32,23 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [activeNav, setActiveNav] = useState('inbox');
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [navItems, setNavItems] = useState<NavItem[]>([]);
   const router = useRouter();
 
   useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged((currentUser) => {
+    const unsubscribe = auth.onAuthStateChanged(async (currentUser) => {
       if (currentUser) {
-        setUser(currentUser);
+        // Get user role from custom claims
+        const idTokenResult = await currentUser.getIdTokenResult();
+        const role = idTokenResult.claims.role || ROLES.TEAM_MEMBER;
+
+        setUser({
+          ...currentUser,
+          role
+        });
+
+        // Set navigation items based on role
+        setNavItems(getNavItems(role));
       } else {
         router.push('/login');
       }
@@ -95,9 +112,10 @@ export default function DashboardPage() {
                         ? 'bg-gradient-to-r from-yellow-400 to-yellow-300 text-black font-semibold'
                         : 'text-gray-400 hover:text-yellow-400 hover:bg-yellow-400/10'
                     }`}
+                    title={item.label}
                   >
                     <span className="text-xl">{item.icon}</span>
-                    <span>{item.label}</span>
+                    <span className="truncate">{item.label}</span>
                   </button>
                 ))}
               </div>
@@ -107,14 +125,15 @@ export default function DashboardPage() {
             <div className="border-t border-yellow-400/10 pt-6">
               <div className="bg-yellow-400/10 border border-yellow-400/20 rounded-lg p-4 mb-4">
                 <div className="flex items-center gap-3 mb-3">
-                  <div className="w-12 h-12 bg-gradient-to-r from-yellow-400 to-yellow-300 rounded-full flex items-center justify-center text-black font-bold text-lg">
+                  <div className={`w-12 h-12 bg-gradient-to-r ${ROLE_COLORS[user?.role] || 'from-yellow-400 to-yellow-300'} rounded-full flex items-center justify-center text-white font-bold text-lg`}>
                     {userInitial}
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-white font-semibold text-sm truncate">
                       {user?.displayName || 'User'}
                     </p>
-                    <p className="text-gray-400 text-xs truncate">{user?.email}</p>
+                    <p className="text-gray-400 text-xs truncate">{ROLE_DISPLAY_NAMES[user?.role] || user?.role}</p>
+                    <p className="text-gray-500 text-xs truncate">{user?.email}</p>
                   </div>
                 </div>
               </div>
@@ -148,7 +167,12 @@ export default function DashboardPage() {
             </div>
             <div className="text-right">
               <p className="text-gray-400 text-sm">Welcome back</p>
-              <p className="text-white font-semibold">{user?.displayName || user?.email}</p>
+              <div className="flex items-center gap-2 justify-end">
+                <span className={`text-xs font-semibold px-3 py-1 bg-gradient-to-r ${ROLE_COLORS[user?.role] || 'from-gray-600 to-gray-400'} text-white rounded-full`}>
+                  {ROLE_DISPLAY_NAMES[user?.role] || user?.role}
+                </span>
+                <p className="text-white font-semibold">{user?.displayName || user?.email}</p>
+              </div>
             </div>
           </div>
         </div>

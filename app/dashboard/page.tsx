@@ -4,6 +4,11 @@ import { useEffect, useState } from 'react';
 import { auth } from '@/lib/firebase';
 import { useRouter } from 'next/navigation';
 import { signOut } from 'firebase/auth';
+import Sidebar from '@/components/Sidebar';
+import Header from '@/components/Header';
+import StatCard from '@/components/StatCard';
+import RecentUsers from '@/components/RecentUsers';
+import QuickActions from '@/components/QuickActions';
 import { ROLES, ROLE_DISPLAY_NAMES, ROLE_COLORS, hasPermission, PERMISSIONS } from '@/lib/roles';
 
 interface NavItem {
@@ -11,6 +16,17 @@ interface NavItem {
   label: string;
   id: string;
   permission?: string;
+}
+
+interface User {
+  uid: string;
+  email: string;
+  displayName?: string;
+  role?: string;
+  createdAt?: any;
+  metadata?: {
+    creationTime: string;
+  };
 }
 
 const getNavItems = (role: string): NavItem[] => [
@@ -33,6 +49,12 @@ export default function DashboardPage() {
   const [activeNav, setActiveNav] = useState('inbox');
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [navItems, setNavItems] = useState<NavItem[]>([]);
+  const [users, setUsers] = useState<User[]>([]);
+  const [stats, setStats] = useState({
+    totalUsers: 0,
+    activeUsers: 0,
+    adminUsers: 0
+  });
   const router = useRouter();
 
   useEffect(() => {
@@ -41,6 +63,12 @@ export default function DashboardPage() {
         // Get user role from custom claims
         const idTokenResult = await currentUser.getIdTokenResult();
         const role = idTokenResult.claims.role || ROLES.TEAM_MEMBER;
+
+        // Redirect Super Admin to new dashboard
+        if (role === ROLES.SUPER_ADMIN) {
+          router.push('/dashboard/super-admin');
+          return;
+        }
 
         setUser({
           ...currentUser,

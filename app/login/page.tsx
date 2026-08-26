@@ -5,6 +5,15 @@ import { signInWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { useRouter } from 'next/navigation';
 
+interface Particle {
+  id: number;
+  left: string;
+  top: string;
+  opacity: number;
+  duration: number;
+  delay: number;
+}
+
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -14,6 +23,7 @@ export default function LoginPage() {
   const [remember, setRemember] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [showForgot, setShowForgot] = useState(false);
+  const [particles, setParticles] = useState<Particle[]>([]);
   const router = useRouter();
 
   useEffect(() => {
@@ -22,6 +32,16 @@ export default function LoginPage() {
       setEmail(savedEmail);
       setRemember(true);
     }
+
+    const generatedParticles: Particle[] = [...Array(50)].map((_, i) => ({
+      id: i,
+      left: `${Math.random() * 100}%`,
+      top: `${Math.random() * 100}%`,
+      opacity: Math.random() * 0.5 + 0.2,
+      duration: Math.random() * 3 + 3,
+      delay: Math.random() * 2,
+    }));
+    setParticles(generatedParticles);
   }, []);
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -52,16 +72,16 @@ export default function LoginPage() {
     <div className="min-h-screen w-full bg-gradient-to-br from-[#070B1A] to-[#0B1026] flex items-center justify-center overflow-hidden relative p-5">
       {/* Particles Background */}
       <div className="fixed inset-0 pointer-events-none">
-        {[...Array(50)].map((_, i) => (
+        {particles.map((particle) => (
           <div
-            key={i}
+            key={particle.id}
             className="absolute w-0.5 h-0.5 bg-yellow-400 rounded-full animate-float"
             style={{
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
-              opacity: Math.random() * 0.5 + 0.2,
-              animation: `float ${Math.random() * 3 + 3}s linear infinite, twinkle 3s ease-in-out infinite`,
-              animationDelay: `${Math.random() * 2}s`,
+              left: particle.left,
+              top: particle.top,
+              opacity: particle.opacity,
+              animation: `float ${particle.duration}s linear infinite, twinkle 3s ease-in-out infinite`,
+              animationDelay: `${particle.delay}s`,
             }}
           />
         ))}
@@ -193,9 +213,15 @@ export default function LoginPage() {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="text-yellow-400 text-lg ml-2"
+                  className="text-yellow-400 ml-2"
                 >
-                  {showPassword ? '👁️' : '👁️'}
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    {showPassword ? (
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-4.803m5.596-3.856a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    ) : (
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    )}
+                  </svg>
                 </button>
               </div>
             </div>
@@ -267,8 +293,10 @@ export default function LoginPage() {
       {showSuccess && (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50">
           <div className="bg-black/90 rounded-2xl p-10 text-center border border-yellow-400/20">
-            <div className="w-20 h-20 mx-auto mb-5 bg-green-500/20 border-2 border-green-500 rounded-full flex items-center justify-center text-4xl">
-              ✓
+            <div className="w-20 h-20 mx-auto mb-5 bg-green-500/20 border-2 border-green-500 rounded-full flex items-center justify-center">
+              <svg className="w-10 h-10 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+              </svg>
             </div>
             <h2 className="text-2xl font-bold text-white mb-2">Login Successful!</h2>
             <p className="text-gray-400 mb-6">Welcome back! Redirecting to dashboard...</p>

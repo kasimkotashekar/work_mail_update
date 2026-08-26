@@ -8,7 +8,7 @@ interface HeaderProps {
 
 export default function Header({ user }: HeaderProps) {
   return (
-    <div className="ml-64 bg-black/30 backdrop-blur-md border-b border-yellow-400/10 sticky top-0 z-30">
+    <div className="bg-black/30 backdrop-blur-md border-b border-yellow-400/10 sticky top-0 z-30">
       <div className="flex items-center justify-between p-6">
         <div>
           <h1 className="text-3xl font-bold text-white mb-1">

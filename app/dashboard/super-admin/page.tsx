@@ -112,21 +112,21 @@ export default function SuperAdminDashboard() {
               title="Total Users"
               value={stats.totalUsers}
               subtitle="Updated in real-time"
-              icon="👥"
+              icon="users"
               trend={`↑ ${Math.max(0, stats.totalUsers - 1)} new users`}
             />
             <StatCard
               title="Active Users"
               value={stats.activeUsers}
               subtitle="Users logged in this month"
-              icon="✅"
+              icon="check"
               trend={`${Math.round((stats.activeUsers / Math.max(1, stats.totalUsers)) * 100)}% active`}
             />
             <StatCard
               title="Admin Users"
               value={stats.adminUsers}
               subtitle="Management tier users"
-              icon="🔐"
+              icon="lock"
               trend={`${stats.adminUsers} management roles`}
             />
           </div>

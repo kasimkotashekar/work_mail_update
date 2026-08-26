@@ -233,3 +233,228 @@ export async function verifyIdToken(token: string) {
     return null;
   }
 }
+
+/**
+ * Get effective permissions (default + granted)
+ */
+export async function getEffectivePermissions(uid: string): Promise<string[]> {
+  try {
+    const userProfile = await getUserProfile(uid);
+    if (!userProfile) return [];
+
+    // Get role's default permissions
+    const ROLE_HIERARCHY = {
+      backend_developer: { defaultPermissions: ['*'] },
+      super_admin: {
+        defaultPermissions: [
+          'users.create',
+          'users.read',
+          'users.update',
+          'users.delete',
+          'roles.assign',
+          'permissions.grant',
+          'permissions.revoke',
+          'permissions.modify',
+          'system.audit_logs',
+          'system.settings'
+        ]
+      },
+      admin: {
+        defaultPermissions: [
+          'users.create',
+          'users.read',
+          'users.update',
+          'permissions.grant',
+          'permissions.revoke',
+          'reports.view'
+        ]
+      },
+      manager: {
+        defaultPermissions: [
+          'users.read',
+          'team.manage',
+          'reports.view',
+          'dashboard.view'
+        ]
+      },
+      team_lead: {
+        defaultPermissions: [
+          'users.read',
+          'team.manage_members',
+          'dashboard.view'
+        ]
+      },
+      team_member: {
+        defaultPermissions: ['dashboard.view']
+      }
+    };
+
+    const roleDefaults =
+      ROLE_HIERARCHY[userProfile.role as keyof typeof ROLE_HIERARCHY]?.defaultPermissions || [];
+    const grantedPermissions = userProfile.permissions || [];
+
+    // Combine and deduplicate
+    return [...new Set([...roleDefaults, ...grantedPermissions])];
+  } catch (error) {
+    console.error('Error getting effective permissions:', error);
+    return [];
+  }
+}
+
+/**
+ * Grant permission with full audit trail
+ */
+export async function grantPermissionWithAudit(
+  uid: string,
+  permission: string,
+  grantedBy: string,
+  grantedByRole: string
+): Promise<{ success: boolean; message?: string }> {
+  try {
+    const userProfile = await getUserProfile(uid);
+    if (!userProfile) {
+      throw new Error('Target user not found');
+    }
+
+    // Check if already has permission
+    if (userProfile.permissions?.includes(permission)) {
+      return { success: false, message: 'User already has this permission' };
+    }
+
+    // Grant permission
+    await grantPermissionToUser(uid, permission, grantedBy);
+
+    // Log audit trail
+    await logAuditAction(grantedBy, 'PERMISSION_GRANTED', {
+      actorRole: grantedByRole,
+      targetUserId: uid,
+      targetRole: userProfile.role,
+      targetPermission: permission,
+      newValue: permission,
+      success: true
+    });
+
+    // Update custom claims in Firebase Auth
+    const effectivePerms = await getEffectivePermissions(uid);
+    await setUserClaims(uid, {
+      role: userProfile.role,
+      permissions: effectivePerms
+    });
+
+    return { success: true, message: `Permission granted: ${permission}` };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Unknown error';
+
+    // Log failed attempt
+    await logAuditAction(grantedBy, 'PERMISSION_GRANT_FAILED', {
+      actorRole: grantedByRole,
+      targetUserId: uid,
+      targetPermission: permission,
+      success: false,
+      errorMessage: message
+    });
+
+    return { success: false, message };
+  }
+}
+
+/**
+ * Revoke permission with full audit trail
+ */
+export async function revokePermissionWithAudit(
+  uid: string,
+  permission: string,
+  revokedBy: string,
+  revokedByRole: string
+): Promise<{ success: boolean; message?: string }> {
+  try {
+    const userProfile = await getUserProfile(uid);
+    if (!userProfile) {
+      throw new Error('Target user not found');
+    }
+
+    // Check if user has permission
+    if (!userProfile.permissions?.includes(permission)) {
+      return { success: false, message: 'User does not have this permission' };
+    }
+
+    // Revoke permission
+    await revokePermissionFromUser(uid, permission, revokedBy);
+
+    // Log audit trail
+    await logAuditAction(revokedBy, 'PERMISSION_REVOKED', {
+      actorRole: revokedByRole,
+      targetUserId: uid,
+      targetRole: userProfile.role,
+      targetPermission: permission,
+      previousValue: permission,
+      success: true
+    });
+
+    // Update custom claims in Firebase Auth
+    const effectivePerms = await getEffectivePermissions(uid);
+    await setUserClaims(uid, {
+      role: userProfile.role,
+      permissions: effectivePerms
+    });
+
+    return { success: true, message: `Permission revoked: ${permission}` };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Unknown error';
+
+    // Log failed attempt
+    await logAuditAction(revokedBy, 'PERMISSION_REVOKE_FAILED', {
+      actorRole: revokedByRole,
+      targetUserId: uid,
+      targetPermission: permission,
+      success: false,
+      errorMessage: message
+    });
+
+    return { success: false, message };
+  }
+}
+
+/**
+ * Get audit logs for a specific user
+ */
+export async function getAuditLogsForUser(
+  targetUserId: string,
+  limit: number = 50
+): Promise<AuditLog[]> {
+  try {
+    const snapshot = await adminDb
+      .ref(DB_PATHS.auditLogs)
+      .orderByChild('targetUserId')
+      .equalTo(targetUserId)
+      .limitToLast(limit)
+      .get();
+
+    if (!snapshot.exists()) return [];
+    const logs = snapshot.val();
+    return Object.values(logs).reverse() as AuditLog[];
+  } catch (error) {
+    console.error('Error fetching audit logs:', error);
+    return [];
+  }
+}
+
+/**
+ * Get all audit logs
+ */
+export async function getAllAuditLogs(limit: number = 100): Promise<AuditLog[]> {
+  try {
+    const snapshot = await adminDb
+      .ref(DB_PATHS.auditLogs)
+      .orderByChild('timestamp')
+      .limitToLast(limit)
+      .get();
+
+    if (!snapshot.exists()) return [];
+    const logs = snapshot.val();
+    return Object.values(logs).reverse() as AuditLog[];
+  } catch (error) {
+    console.error('Error fetching all audit logs:', error);
+    return [];
+  }
+}

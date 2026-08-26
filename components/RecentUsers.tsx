@@ -53,8 +53,15 @@ export default function RecentUsers({ users }: RecentUsersProps) {
 
   return (
     <div className="bg-gradient-to-br from-[#1a1a2e] to-[#16213e] border border-yellow-400/20 rounded-xl overflow-hidden">
-      <div className="bg-gradient-to-r from-yellow-400/20 to-yellow-300/10 border-b border-yellow-400/20 px-6 py-4">
+      <div className="bg-gradient-to-r from-yellow-400/20 to-yellow-300/10 border-b border-yellow-400/20 px-6 py-4 flex items-center justify-between">
         <h2 className="text-xl font-bold text-white">Recently Added Users</h2>
+        <button className="text-gray-400 hover:text-yellow-400 transition p-2">
+          <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+            <circle cx="12" cy="5" r="2" />
+            <circle cx="12" cy="12" r="2" />
+            <circle cx="12" cy="19" r="2" />
+          </svg>
+        </button>
       </div>
 
       <div className="divide-y divide-yellow-400/10">

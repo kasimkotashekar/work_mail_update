@@ -64,7 +64,7 @@ export async function POST(request: NextRequest) {
         actorRole: 'unknown',
         success: false,
         errorMessage: 'Invalid bootstrap secret',
-        ipAddress: request.ip,
+        ipAddress: request.headers.get('x-forwarded-for') || 'unknown',
         userAgent: request.headers.get('user-agent') || undefined,
       }).catch(() => {}); // Ignore logging errors
 
@@ -119,7 +119,7 @@ export async function POST(request: NextRequest) {
       uid: newUser.uid,
       email: newUser.email,
       displayName: newUser.displayName || displayName || email.split('@')[0],
-      role: 'super_admin',
+      role: 'super_admin' as const,
       permissions: defaultPermissions,
       isActive: true,
       createdAt: Date.now(),
@@ -133,7 +133,7 @@ export async function POST(request: NextRequest) {
       },
     };
 
-    await updateUserProfile(newUser.uid, userProfile);
+    await updateUserProfile(newUser.uid, userProfile as any);
 
     // Set custom claims with full super admin permissions
     await setUserClaims(newUser.uid, {

@@ -20,11 +20,11 @@ export function useAuth() {
         if (firebaseUser) {
           // Fetch user role from custom claims or Firestore
           const idTokenResult = await firebaseUser.getIdTokenResult();
-          const role = idTokenResult.claims.role || 'team_member';
+          const role = (idTokenResult.claims.role as string) || 'team_member';
 
           setUser({
             ...firebaseUser,
-            role
+            role: typeof role === 'string' ? role : 'team_member'
           });
         } else {
           setUser(null);

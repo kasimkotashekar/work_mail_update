@@ -16,13 +16,14 @@ import { canManageRole, getEffectivePermissions as getGrantablePerms, getRoleLev
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const userId = request.headers.get('x-user-id');
     const userRole = request.headers.get('x-user-role');
     const userPermissionsHeader = request.headers.get('x-user-permissions');
-    const targetUserId = params.id;
+    const targetUserId = id;
 
     if (!userId || !userRole) {
       return NextResponse.json(

@@ -12,12 +12,13 @@ import { canManageRole } from '@/lib/rbac-utils';
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { userId: string } }
+  { params }: { params: Promise<{ userId: string }> }
 ) {
   try {
+    const { userId } = await params;
     const currentUserId = request.headers.get('x-user-id');
     const currentUserRole = request.headers.get('x-user-role');
-    const targetUserId = params.userId;
+    const targetUserId = userId;
 
     if (!currentUserId || !currentUserRole) {
       return NextResponse.json(

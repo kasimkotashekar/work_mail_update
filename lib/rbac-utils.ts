@@ -117,10 +117,10 @@ export function getPermissionInfo(permission: string): {
  * Get all permissions for a category
  */
 export function getPermissionsByCategory(
-  category: keyof typeof PERMISSION_CATEGORIES
+  category: string
 ): string[] {
   return Object.entries(ALL_PERMISSIONS)
-    .filter(([_, info]) => info.category === category)
+    .filter(([_, info]) => info.category === category.toLowerCase())
     .map(([permission]) => permission);
 }
 

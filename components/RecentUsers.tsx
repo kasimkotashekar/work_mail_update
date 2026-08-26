@@ -73,7 +73,7 @@ export default function RecentUsers({ users }: RecentUsersProps) {
             <div key={user.uid} className="p-6 hover:bg-yellow-400/5 transition">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
-                  <div className={`w-12 h-12 bg-gradient-to-r ${ROLE_COLORS[user.role] || 'from-gray-600 to-gray-400'} rounded-full flex items-center justify-center text-white font-bold`}>
+                  <div className={`w-12 h-12 bg-gradient-to-r ${ROLE_COLORS[user.role as keyof typeof ROLE_COLORS] || 'from-gray-600 to-gray-400'} rounded-full flex items-center justify-center text-white font-bold`}>
                     {userInitial}
                   </div>
                   <div className="flex-1">

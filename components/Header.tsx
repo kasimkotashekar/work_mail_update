@@ -4,9 +4,10 @@ import { ROLE_DISPLAY_NAMES, ROLE_COLORS } from '@/lib/roles';
 
 interface HeaderProps {
   user: any;
+  userRole?: string;
 }
 
-export default function Header({ user }: HeaderProps) {
+export default function Header({ user, userRole }: HeaderProps) {
   return (
     <div className="bg-black/30 backdrop-blur-md border-b border-yellow-400/10 sticky top-0 z-30">
       <div className="flex items-center justify-between p-6">

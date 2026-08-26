@@ -34,12 +34,13 @@ import {
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const userId = request.headers.get('x-user-id');
     const userRole = request.headers.get('x-user-role');
-    const targetUserId = params.id;
+    const targetUserId = id;
 
     if (!userId || !userRole) {
       return NextResponse.json(
@@ -109,12 +110,13 @@ export async function GET(
  */
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const userId = request.headers.get('x-user-id');
     const userRole = request.headers.get('x-user-role');
-    const targetUserId = params.id;
+    const targetUserId = id;
 
     if (!userId || !userRole) {
       return NextResponse.json(
@@ -189,7 +191,7 @@ export async function PATCH(
 
       // Update role
       await updateUserProfile(targetUserId, {
-        role: sanitizedRole,
+        role: sanitizedRole as any,
         updatedBy: userId,
       });
 
@@ -322,12 +324,13 @@ export async function PATCH(
  */
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const userId = request.headers.get('x-user-id');
     const userRole = request.headers.get('x-user-role');
-    const targetUserId = params.id;
+    const targetUserId = id;
 
     if (!userId || !userRole) {
       return NextResponse.json(
